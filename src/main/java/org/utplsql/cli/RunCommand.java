@@ -83,6 +83,13 @@ public class RunCommand {
     private boolean skipCompatibilityCheck = false;
 
     @Parameter(
+            names = {"-coverageSchemes"},
+            description = "Comma-separated schema list to include in the coverage report. " +
+                    "Format: schema,schema ...]. See coverage reporting options in framework documentation"
+    )
+    private String coverageSchemes = null;
+
+    @Parameter(
             names = {"-include"},
             description = "Comma-separated object list to include in the coverage report. " +
                     "Format: [schema.]package[,[schema.]package ...]. See coverage reporting options in framework documentation"
@@ -116,6 +123,7 @@ public class RunCommand {
         final ConnectionInfo ci = getConnectionInfo();
 
         final List<Reporter> reporterList;
+        final List<String> coverageSchemesList;
         final List<String> testPaths = getTestPaths();
 
         final File baseDir = new File("").getAbsoluteFile();
@@ -129,6 +137,12 @@ public class RunCommand {
 
         ArrayList<String> includeObjectsList;
         ArrayList<String> excludeObjectsList;
+
+        if (coverageSchemes != null && !coverageSchemes.isEmpty()) {
+            coverageSchemesList = new ArrayList<>(Arrays.asList(coverageSchemes.split(",")));
+        } else {
+            coverageSchemesList = new ArrayList<>();
+        }
 
         if (includeObjects != null && !includeObjects.isEmpty()) {
             includeObjectsList = new ArrayList<>(Arrays.asList(includeObjects.split(",")));
@@ -187,6 +201,9 @@ public class RunCommand {
                         .skipCompatibilityCheck(skipCompatibilityCheck)
                         .includeObjects(finalIncludeObjectsList)
                         .excludeObjects(finalExcludeObjectsList);
+                for (String cs : coverageSchemesList) {
+                    testRunner.addCoverageScheme(cs);
+                }
 
                 testRunner.run(conn);
             } catch (SomeTestsFailedException e) {
